@@ -9,5 +9,10 @@ app.use(express.json());  // let the server read JSON sent by clients
 app.get("/", (req, res) => {
   res.json({ message: "Chat API is running" });
 });
+app.use("/api/auth", require("./routes/authRoutes"));
 
-module.exports = app;     // export so server.js can use it
+app.use(require("./middleware/errorHandler")); // must stay LAST
+
+module.exports = app;
+
+     // export so server.js can use it
