@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chat Backend: Sign up and log in</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="shell">
+
+    <!-- Left: a static preview of what the chat will look like -->
+    <aside class="preview" aria-hidden="true">
+      <h1>Rooms that remember.</h1>
+      <p class="lead">Join a room, talk live, and read the history any time.</p>
+      <div class="thread">
+        <p class="room">#general</p>
+        <div class="bubble them"><b>alice</b>Meeting at 5?</div>
+        <div class="bubble them"><b>bob</b>Works for me.</div>
+        <div class="bubble me">I'll send the notes after.</div>
+      </div>
+    </aside>
+
+    <!-- Right: forms and session -->
+    <section class="panel">
+
+      <!-- Auth view -->
+      <div id="authView">
+        <div class="tabs" role="tablist" aria-label="Account">
+          <button role="tab" id="tabSignup" aria-selected="true" aria-controls="signupForm">Sign up</button>
+          <button role="tab" id="tabLogin" aria-selected="false" aria-controls="loginForm">Log in</button>
+        </div>
+
+        <form id="signupForm" novalidate>
+          <label for="suUsername">Username</label>
+          <input id="suUsername" name="username" autocomplete="username" required />
+
+          <label for="suEmail">Email</label>
+          <input id="suEmail" name="email" type="email" autocomplete="email" required />
+
+          <label for="suPassword">Password</label>
+          <input id="suPassword" name="password" type="password" minlength="6"
+                 autocomplete="new-password" required />
+          <small>At least 6 characters.</small>
+
+          <button class="primary" type="submit">Create account</button>
+        </form>
+
+        <form id="loginForm" hidden novalidate>
+          <label for="liEmail">Email</label>
+          <input id="liEmail" name="email" type="email" autocomplete="email" required />
+
+          <label for="liPassword">Password</label>
+          <input id="liPassword" name="password" type="password"
+                 autocomplete="current-password" required />
+
+          <button class="primary" type="submit">Log in</button>
+        </form>
+
+        <p id="message" role="status" aria-live="polite"></p>
+      </div>
+
+      <!-- Logged-in view -->
+      <div id="sessionView" hidden>
+        <h2>Hi, <span id="whoName"></span></h2>
+        <p class="muted" id="whoEmail"></p>
+
+        <label for="tokenBox">Your login token</label>
+        <textarea id="tokenBox" readonly rows="4"></textarea>
+        <small>Copy this to test the live chat page later. Treat it like a password.</small>
+
+        <div class="row">
+          <button class="primary" id="copyBtn" type="button">Copy token</button>
+          <button class="ghost" id="logoutBtn" type="button">Log out</button>
+        </div>
+        <p id="sessionMsg" role="status" aria-live="polite"></p>
+        <p class="muted">Rooms and live messages arrive in the next steps.</p>
+      </div>
+
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

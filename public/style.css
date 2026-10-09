@@ -1,0 +1,156 @@
+:root {
+  --ink: #16242f;
+  --paper: #eef2f4;
+  --card: #ffffff;
+  --teal: #0e7c86;
+  --teal-dark: #0a5b63;
+  --amber: #f0b13a;
+  --line: #cdd7dc;
+  --muted: #5b6b75;
+  --danger: #b3261e;
+  --ok: #1b6e3c;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e8eef1;
+    --paper: #0f1a21;
+    --card: #17262f;
+    --line: #2c3f4a;
+    --muted: #9bb0ba;
+    --danger: #ff8a80;
+    --ok: #7fd49b;
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+.shell {
+  min-height: 100%;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+}
+
+/* ---------- left preview ---------- */
+.preview {
+  background: var(--teal-dark);
+  color: #fff;
+  padding: clamp(28px, 6vw, 72px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+}
+.preview h1 {
+  margin: 0;
+  font-size: clamp(2.4rem, 5.5vw, 4.4rem);
+  line-height: 1.02;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  max-width: 11ch;
+}
+.lead { margin: 0; max-width: 34ch; opacity: .85; font-size: 1.05rem; }
+.thread {
+  margin-top: 18px;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.room { margin: 0 0 4px; font-weight: 600; color: var(--amber); }
+.bubble {
+  padding: 10px 14px;
+  border-radius: 16px;
+  max-width: 85%;
+  font-size: .95rem;
+}
+.bubble b { display: block; font-size: .78rem; opacity: .7; margin-bottom: 1px; }
+.bubble.them { background: #ffffff1f; border-bottom-left-radius: 4px; }
+.bubble.me {
+  align-self: flex-end;
+  background: var(--amber);
+  color: #2a1d00;
+  border-bottom-right-radius: 4px;
+}
+
+/* ---------- right panel ---------- */
+.panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(24px, 5vw, 72px);
+  max-width: 520px;
+  width: 100%;
+  margin: 0 auto;
+}
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 22px;
+}
+.tabs button {
+  font: inherit;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  padding: 10px 14px;
+  margin-bottom: -1px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--teal); }
+
+form { display: flex; flex-direction: column; }
+form[hidden], [hidden] { display: none !important; }
+label { font-weight: 600; font-size: .9rem; margin: 14px 0 6px; }
+input, textarea {
+  font: inherit;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 11px 12px;
+  width: 100%;
+}
+textarea { font-family: ui-monospace, Menlo, monospace; font-size: .8rem; resize: none; word-break: break-all; }
+input:focus, textarea:focus, button:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 2px;
+}
+small { color: var(--muted); margin-top: 6px; }
+
+button.primary, button.ghost {
+  font: inherit;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 12px 18px;
+  cursor: pointer;
+  margin-top: 22px;
+}
+button.primary { background: var(--teal); color: #fff; border: 1px solid var(--teal); }
+button.primary:hover { background: var(--teal-dark); }
+button.primary:disabled { opacity: .6; cursor: wait; }
+button.ghost { background: none; color: var(--ink); border: 1px solid var(--line); }
+button.ghost:hover { border-color: var(--ink); }
+.row { display: flex; gap: 10px; }
+.row button { flex: 1; }
+
+#message, #sessionMsg { min-height: 1.5em; margin: 14px 0 0; font-weight: 600; }
+.error { color: var(--danger); }
+.success { color: var(--ok); }
+.muted { color: var(--muted); }
+h2 { margin: 0; font-size: 2rem; letter-spacing: -0.01em; }
+
+@media (max-width: 800px) {
+  .shell { grid-template-columns: 1fr; }
+  .preview { padding: 32px 24px; }
+  .thread { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
