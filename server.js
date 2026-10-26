@@ -13,6 +13,11 @@ const { Pool } = pg;
  const JWT_SECRET = process.env.JWT_SECRET;
 
  const app = express();
+import http from "http";
+import { Server } from "socket.io";
+x
+const server = http.createServer(app);   
+const io = new Server(server);           
  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
  
  app.use(cors());
@@ -113,11 +118,11 @@ const { Pool } = pg;
         if(!name) {
           return res.status(400).json({ message: "Room name is required" });
         }
-        const result = await pool.query(
+        const room = await pool.query(
           "INSERT INTO rooms (name, created_by) VALUES ($1, $2) RETURNING *",
           [name, req.user.id]
         );
-        res.status(201).json({ message: "Room created successfully", room: result.rows[0] });
+        
       
 
       await pool.query("INSERT INTO room_members (room_id, user_id) VALUES ($1, $2)", [
@@ -129,6 +134,21 @@ const { Pool } = pg;
     if (err.code === "23505") {
       return res.status(409).json({ error: "A room with this name already exists" });
     }
+    console.error(err);
+    res.status(500).json({ error: "Something went wrong on the server" });
+  }
+});
+app.get("/api/rooms", auth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT r.id, r.name, r.created_at, COUNT(rm.user_id)::int AS member_count
+       FROM rooms r
+       LEFT JOIN room_members rm ON rm.room_id = r.id
+       GROUP BY r.id
+       ORDER BY r.created_at DESC`
+    );
+    res.json(result.rows);
+  } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Something went wrong on the server" });
   }
@@ -191,8 +211,15 @@ app.get("/api/rooms/:id/messages", auth, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Something went wrong on the server" });
+  
   }
 });
+
+
+
+
+
+
 
 
 
@@ -208,6 +235,6 @@ app.get("/api/rooms/:id/messages", auth, async (req, res) => {
 
 
 
- app.listen(PORT, () => {
+ server.listen(PORT, () => {
    console.log(`Server is running on port ${PORT}`);
  });

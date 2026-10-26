@@ -35,6 +35,8 @@
       --mine: #f0a30a;
       --mine-text: #3a2700;
       --theirs: #1c3146;
+      --error: #ff8a80;
+      --ok: #4cd9a0;
     }
   }
   * { box-sizing: border-box; }
@@ -115,6 +117,14 @@
   .pill { margin-left: auto; font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
   .pill.live { color: var(--ok); border-color: var(--ok); }
 
+  /* Add member */
+  .ghost { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 6px 12px; font-weight: 600; }
+  .ghost:hover { border-color: var(--accent); }
+  .addbar { display: flex; gap: 10px; align-items: center; padding: 10px 20px; background: var(--panel); border-bottom: 1px solid var(--line); }
+  .addbar input { flex: 1; max-width: 320px; }
+  .addbar .btn { padding: 10px 16px; }
+  .addbar .msg { margin: 0; min-height: 0; }
+
   #messages { flex: 1; overflow-y: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; }
   .older { align-self: center; background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 14px; color: var(--muted); }
   .older:hover { color: var(--ink); }
@@ -136,6 +146,7 @@
     body.menu-open aside { transform: none; }
     #menuBtn { display: block; }
     .row { max-width: 88%; }
+    .addbar { flex-wrap: wrap; }
   }
   @media (prefers-reduced-motion: reduce) { aside { transition: none; } }
 </style>
@@ -188,8 +199,16 @@
     <div class="topbar">
       <button id="menuBtn" type="button" aria-label="Show rooms">Rooms</button>
       <h2 id="roomTitle">Choose a room</h2>
+      <button type="button" class="ghost" id="addBtn" hidden>Add member</button>
       <span class="pill" id="status">Offline</span>
     </div>
+
+    <form id="addForm" class="addbar" hidden>
+      <input type="text" id="addName" placeholder="Username to add" aria-label="Username to add" />
+      <button class="btn" type="submit">Add</button>
+      <span class="msg" id="addMsg" role="status"></span>
+    </form>
+
     <div id="messages" aria-live="polite">
       <p class="placeholder">Select a room on the left, or create one, to start chatting.</p>
     </div>
@@ -229,13 +248,21 @@ async function api(path, options = {}) {
   try { data = await res.json(); } catch { /* empty body */ }
 
   if (res.status === 401 && state.token) { logout(); throw new Error("Session expired. Log in again."); }
-  if (!res.ok) throw new Error(data.error || "Request failed (" + res.status + ")");
+  // Your server sends errors as { error } in some routes and { message } in others
+  if (!res.ok) throw new Error(data.error || data.message || "Request failed (" + res.status + ")");
   return data;
 }
 
 function say(el, text, kind) {
   el.textContent = text;
   el.className = "msg " + (kind || "");
+}
+
+function textEl(tag, cls, text) {
+  const el = document.createElement(tag);
+  if (cls) el.className = cls;
+  el.textContent = text;       // textContent, never innerHTML: user text can't inject scripts
+  return el;
 }
 
 // ====================================================
@@ -317,14 +344,9 @@ function resetChatPane() {
   state.roomId = null;
   $("roomTitle").textContent = "Choose a room";
   $("messages").replaceChildren(textEl("p", "placeholder", "Select a room on the left, or create one, to start chatting."));
+  $("addBtn").hidden = true;
+  $("addForm").hidden = true;
   setComposer(false, "Select a room first");
-}
-
-function textEl(tag, cls, text) {
-  const el = document.createElement(tag);
-  if (cls) el.className = cls;
-  el.textContent = text;       // textContent, never innerHTML: user text can't inject scripts
-  return el;
 }
 
 // ====================================================
@@ -383,6 +405,9 @@ async function openRoom(room) {
   state.roomId = room.id;
   state.page = 1;
   $("roomTitle").textContent = "# " + room.name;
+  $("addBtn").hidden = false;
+  $("addForm").hidden = true;
+  say($("addMsg"), "");
   $("messages").replaceChildren();
   renderRooms();
   loadRooms();   // refresh member counts in the background
@@ -394,7 +419,32 @@ async function openRoom(room) {
 }
 
 // ====================================================
-// 5. Message history (REST)
+// 5. Add a member to the open room
+// ====================================================
+$("addBtn").onclick = () => {
+  $("addForm").hidden = !$("addForm").hidden;
+  if (!$("addForm").hidden) $("addName").focus();
+};
+
+$("addForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const username = $("addName").value.trim();
+  if (!username || !state.roomId) return;
+  try {
+    const data = await api("/api/rooms/" + state.roomId + "/members", {
+      method: "POST",
+      body: JSON.stringify({ username }),
+    });
+    say($("addMsg"), data.message, "ok");
+    $("addName").value = "";
+    loadRooms();   // refresh member counts
+  } catch (err) {
+    say($("addMsg"), err.message, "error");
+  }
+});
+
+// ====================================================
+// 6. Message history (REST)
 // ====================================================
 async function loadHistory(first) {
   const box = $("messages");
@@ -442,7 +492,7 @@ function messageEl(m) {
 }
 
 // ====================================================
-// 6. Live chat (Socket.io)
+// 7. Live chat (Socket.io)
 // ====================================================
 function connectSocket() {
   if (typeof io === "undefined") return setStatus("History only", false);   // server has no Socket.io yet
@@ -454,10 +504,9 @@ function connectSocket() {
   socket.on("connect", () => {
     setStatus("Live", true);
     if (state.roomId) socket.emit("joinRoom", state.roomId);
-    if (state.roomId) setComposer(true, "Write a message");
   });
   socket.on("disconnect", () => setStatus("Reconnecting...", false));
-  socket.on("connect_error", (err) => setStatus(err.message === "xhr poll error" ? "Offline" : "Not connected", false));
+  socket.on("connect_error", () => setStatus("Not connected", false));
 
   socket.on("newMessage", (m) => {
     const roomOfMsg = m.room_id ?? m.roomId;
@@ -494,7 +543,7 @@ $("composer").addEventListener("submit", (e) => {
 });
 
 // ====================================================
-// 7. Mobile menu and first load
+// 8. Mobile menu and first load
 // ====================================================
 $("menuBtn").onclick = () => document.body.classList.toggle("menu-open");
 
